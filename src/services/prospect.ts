@@ -21,11 +21,29 @@ export interface Prospect {
   userId: number;
   filter: ProspectFilter;
   externalId: number;
+  status: number | string;
 }
 
-export const getProspectList = async (): Promise<Prospect[]> => {
+export const getProspectList = async (
+  page: number,
+  limit: number,
+  filters: {
+    id: string,
+    user: string,
+    state: string,
+    quantity: string,
+    format: string,
+    status: string
+  }
+): Promise<{ data: Prospect[], total: number, totalPages: number }> => {
   const token = localStorage.getItem('access_token');
-  const response = await fetch(`${API_CONFIG.baseURL}/prospect/list`, {
+  let filterString = '';
+  for(const [key, value] of Object.entries(filters)) {
+    if(value) {
+      filterString += `${key}=${value}&`;
+    }
+  }
+  const response = await fetch(`${API_CONFIG.baseURL}/prospect/list?page=${page}&limit=${limit}&${filterString}`, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -41,7 +59,15 @@ export const getProspectList = async (): Promise<Prospect[]> => {
     throw new Error('Failed to fetch prospect list');
   }
 
-  return response.json();
+  const json = await response.json();
+  const total = json.total;
+  const totalPages = json.totalPages;
+
+  return {
+    data: json.data,
+    total: total,
+    totalPages: totalPages,
+  };
 };
 
 export const createProspect = async (data: {
@@ -70,8 +96,8 @@ export const createProspect = async (data: {
   if (!response.ok) {
     throw new Error('Failed to create prospect');
   }
-
-  return response.json();
+  const json = await response.json();
+  return json.data;
 };
 
 export const downloadProspect = async (externalId: number): Promise<void> => {

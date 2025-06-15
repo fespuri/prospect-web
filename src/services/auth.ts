@@ -21,6 +21,7 @@ const handleUnauthorized = () => {
 };
 
 export const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
+  console.log(credentials);
   const response = await fetch(`${API_CONFIG.baseURL}/auth/login`, {
     method: 'POST',
     headers: {
@@ -54,5 +55,6 @@ export const getUsers = async (): Promise<User[]> => {
     throw new Error('Failed to fetch users');
   }
 
-  return response.json();
+  const json = await response.json();
+  return json.result.data;
 };
