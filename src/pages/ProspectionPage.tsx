@@ -352,7 +352,7 @@ function ProspectionPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Estados</label>
-                  <select className="w-full p-2 border rounded-md mb-2" value={advFilterStates} onChange={e => setAdvFilterStates(e.target.value)}>
+                  <select className="w-full p-2 border rounded-md mb-2" value={advFilterStates} onChange={e => setAdvFilterStates(Array.from(e.target.selectedOptions, option => option.value))}>
                     {/* para cada item dentro de Estados brasileiros criar um option */}
                     {ESTADOS_BRASILEIROS.map((estado) => (
                       <option value={estado}>{estado}</option>
