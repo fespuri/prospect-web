@@ -1,4 +1,5 @@
 import { API_CONFIG } from '../config/api';
+import { NewProspectDto } from '../pages/ProspectionPage';
 
 const handleUnauthorized = () => {
   localStorage.removeItem('access_token');
@@ -70,14 +71,7 @@ export const getProspectList = async (
   };
 };
 
-export const createProspect = async (data: {
-  name: number;
-  states: string[];
-  export: boolean;
-  quantity: number;
-  plan: number;
-  file_formatting: string;
-}) => {
+export const createProspect = async (data: NewProspectDto) => {
   const token = localStorage.getItem('access_token');
   const response = await fetch(`${API_CONFIG.baseURL}/prospect`, {
     method: 'POST',
