@@ -7,6 +7,8 @@ interface LoginCredentials {
 
 interface LoginResponse {
   access_token: string;
+  id: number;
+  user: string;
 }
 
 interface User {

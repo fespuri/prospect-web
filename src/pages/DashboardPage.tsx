@@ -1,10 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, Search, Users, Database, Home, Settings, LogOut, Bell, FileText, Calendar } from 'lucide-react';
 import ProspectionPage from './ProspectionPage';
+import { getDashboardData } from '../services/api';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
+interface DashboardData {
+  UsersData: {
+    totalUsers: number;
+    totalActive: number;
+    totalInactive: number;
+    totalCreatedToday: number;
+    totalCreatedThisMonth: number;
+    averageUsersPerDay: number;
+    userGrowthRate: string;
+  };
+  ProspectData: {
+    totalProspects: number;
+    totalProspectsAtivos: number;
+    totalProspectsCriadosHoje: number;
+    totalProspectsCriadosMes: number;
+    detailsByUser: Array<{
+      totalProspects: number;
+      totalProspectsAtivos: number;
+      totalProspectsCriadosHoje: number;
+      totalProspectsCriadosMes: number;
+      userId: number;
+    }>;
+    averageCompaniesPerProspect: number;
+    conversionRate: string;
+  };
+  CompaniesData: {
+    topStates: Array<{ state: string; count: string }>;
+    topCities: Array<{ city: string; count: string }>;
+    topCnaeCodes: Array<{ code: number; description: string; count: string }>;
+    companiesByJuridicalType: Array<{ type: string; count: string }>;
+    companiesBySize: Array<{ size: string; count: string }>;
+    companiesByCreationDate: Array<{ year: number; count: string }>;
+    revenueStats: {
+      totalRevenue: number;
+      averageRevenue: number;
+    };
+  };
+}
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82ca9d', '#ffc658', '#8dd1e1'];
 
 function DashboardPage() {
   const [userName, setUserName] = useState('');
   const [currentPage, setCurrentPage] = useState('dashboard');
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const userInfo = localStorage.getItem('user_info');
@@ -12,6 +59,21 @@ function DashboardPage() {
       const { user } = JSON.parse(userInfo);
       setUserName(user);
     }
+  }, []);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await getDashboardData();
+        setDashboardData(response.result);
+        setLoading(false);
+      } catch (err) {
+        setError('Erro ao carregar dados do dashboard');
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
   }, []);
 
   const handleLogout = () => {
@@ -26,70 +88,237 @@ function DashboardPage() {
         return <ProspectionPage />;
       case 'dashboard':
       default:
+        if (loading) {
+          return (
+            <div className="flex items-center justify-center h-screen bg-[#faf6f6]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4b2f82]"></div>
+            </div>
+          );
+        }
+
+        if (error) {
+          return (
+            <div className="flex items-center justify-center h-screen bg-[#faf6f6]">
+              <div className="text-[#e98a15] text-xl">{error}</div>
+            </div>
+          );
+        }
+
+        if (!dashboardData) {
+          return (
+            <div className="flex items-center justify-center h-screen bg-[#faf6f6]">
+              <div className="text-[#4b2f82] text-xl">Nenhum dado disponível</div>
+            </div>
+          );
+        }
+
         return (
-          <div className="p-6">
-            {/* Stats grid */}
-            <div className="grid grid-cols-3 gap-6 mb-8">
-              {/* Daily Reports Card */}
-              <div className="bg-white rounded-lg shadow p-6 border-t-4 border-blue-500">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <FileText className="h-8 w-8 text-blue-500 mr-3" />
-                    <h3 className="text-lg font-medium text-gray-900">Relatórios Diários</h3>
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <p className="text-3xl font-bold text-gray-900">24</p>
-                  <p className="text-sm text-gray-500 mt-1">Relatórios gerados hoje</p>
-                </div>
-                <div className="mt-4">
-                  <span className="text-green-500 text-sm font-medium">↑ 12%</span>
-                  <span className="text-gray-500 text-sm ml-2">desde ontem</span>
-                </div>
-              </div>
+          <div className="min-h-screen bg-[#faf6f6] p-8">
+            {/* Seção de Usuários */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardHeader className="bg-[#4b2f82] rounded-t-lg">
+                  <CardTitle className="text-white">Total de Usuários</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <p className="text-4xl font-bold text-[#4b2f82]">{dashboardData.UsersData.totalUsers}</p>
+                  <p className="text-sm text-gray-500 mt-2">Ativos: {dashboardData.UsersData.totalActive}</p>
+                </CardContent>
+              </Card>
 
-              {/* Monthly Reports Card */}
-              <div className="bg-white rounded-lg shadow p-6 border-t-4 border-purple-500">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <Calendar className="h-8 w-8 text-purple-500 mr-3" />
-                    <h3 className="text-lg font-medium text-gray-900">Relatórios Mensais</h3>
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <p className="text-3xl font-bold text-gray-900">547</p>
-                  <p className="text-sm text-gray-500 mt-1">Relatórios este mês</p>
-                </div>
-                <div className="mt-4">
-                  <span className="text-green-500 text-sm font-medium">↑ 8%</span>
-                  <span className="text-gray-500 text-sm ml-2">desde último mês</span>
-                </div>
-              </div>
+              <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardHeader className="bg-[#4b2f82] rounded-t-lg">
+                  <CardTitle className="text-white">Novos Usuários</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <p className="text-4xl font-bold text-[#4b2f82]">{dashboardData.UsersData.totalCreatedToday}</p>
+                  <p className="text-sm text-gray-500 mt-2">Hoje</p>
+                </CardContent>
+              </Card>
 
-              {/* Users Card */}
-              <div className="bg-white rounded-lg shadow p-6 border-t-4 border-green-500">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <Users className="h-8 w-8 text-green-500 mr-3" />
-                    <h3 className="text-lg font-medium text-gray-900">Usuários</h3>
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <p className="text-3xl font-bold text-gray-900">128</p>
-                  <p className="text-sm text-gray-500 mt-1">Usuários ativos</p>
-                </div>
-                <div className="mt-4">
-                  <span className="text-green-500 text-sm font-medium">↑ 4%</span>
-                  <span className="text-gray-500 text-sm ml-2">desde última semana</span>
-                </div>
-              </div>
+              <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardHeader className="bg-[#4b2f82] rounded-t-lg">
+                  <CardTitle className="text-white">Usuários do Mês</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <p className="text-4xl font-bold text-[#4b2f82]">{dashboardData.UsersData.totalCreatedThisMonth}</p>
+                  <p className="text-sm text-gray-500 mt-2">Este mês</p>
+                </CardContent>
+              </Card>
             </div>
 
-            {/* Chart section */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Volume diário</h3>
-              {/* Chart would go here */}
+            {/* Seção de Prospecções */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardHeader className="bg-[#e98a15] rounded-t-lg">
+                  <CardTitle className="text-white">Total de Prospecções</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <p className="text-4xl font-bold text-[#e98a15]">{dashboardData.ProspectData.totalProspects}</p>
+                  <p className="text-sm text-gray-500 mt-2">Ativas: {dashboardData.ProspectData.totalProspectsAtivos}</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardHeader className="bg-[#e98a15] rounded-t-lg">
+                  <CardTitle className="text-white">Novas Prospecções</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <p className="text-4xl font-bold text-[#e98a15]">{dashboardData.ProspectData.totalProspectsCriadosHoje}</p>
+                  <p className="text-sm text-gray-500 mt-2">Hoje</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardHeader className="bg-[#e98a15] rounded-t-lg">
+                  <CardTitle className="text-white">Prospecções do Mês</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <p className="text-4xl font-bold text-[#e98a15]">{dashboardData.ProspectData.totalProspectsCriadosMes}</p>
+                  <p className="text-sm text-gray-500 mt-2">Este mês</p>
+                </CardContent>
+              </Card>
             </div>
+
+            {/* Tabelas de Empresas */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              {/* Top Estados */}
+              <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardHeader className="bg-[#e98a15] rounded-t-lg">
+                  <CardTitle className="text-white">Top Estados</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {dashboardData.CompaniesData.topStates.map((state, index) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-4 py-2 text-sm text-gray-900">{state.state}</td>
+                            <td className="px-4 py-2 text-sm text-gray-500">{state.count}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Top Cidades */}
+              <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardHeader className="bg-[#e98a15] rounded-t-lg">
+                  <CardTitle className="text-white">Top Cidades</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cidade</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {dashboardData.CompaniesData.topCities.map((city, index) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-4 py-2 text-sm text-gray-900">{city.city}</td>
+                            <td className="px-4 py-2 text-sm text-gray-500">{city.count}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Distribuição por Tamanho */}
+              <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardHeader className="bg-[#4b2f82] rounded-t-lg">
+                  <CardTitle className="text-white">Distribuição por Tamanho</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tamanho</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {dashboardData.CompaniesData.companiesBySize.map((size, index) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-4 py-2 text-sm text-gray-900">{size.size}</td>
+                            <td className="px-4 py-2 text-sm text-gray-500">{size.count}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Empresas por Ano de Criação */}
+              <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardHeader className="bg-[#4b2f82] rounded-t-lg">
+                  <CardTitle className="text-white">Empresas por Ano de Criação</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ano</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {dashboardData.CompaniesData.companiesByCreationDate.map((year, index) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-4 py-2 text-sm text-gray-900">{year.year}</td>
+                            <td className="px-4 py-2 text-sm text-gray-500">{year.count}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Top CNAEs */}
+            <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 mb-8">
+              <CardHeader className="bg-[#e98a15] rounded-t-lg">
+                <CardTitle className="text-white">Top CNAEs</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {dashboardData.CompaniesData.topCnaeCodes.map((cnae, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-4 py-2 text-sm text-gray-900">{cnae.code}</td>
+                          <td className="px-4 py-2 text-sm text-gray-500">{cnae.description}</td>
+                          <td className="px-4 py-2 text-sm text-gray-500">{cnae.count}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         );
     }
