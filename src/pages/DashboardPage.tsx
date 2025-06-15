@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Search, Users, Database, Home, Settings, LogOut, Bell, FileText, Calendar } from 'lucide-react';
+import { Search, Users, Database, Home , Bell } from 'lucide-react';
 import ProspectionPage from './ProspectionPage';
+import UsersPage from './UsersPage';
 import { getDashboardData } from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface DashboardData {
   UsersData: {
@@ -43,8 +43,6 @@ interface DashboardData {
     };
   };
 }
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82ca9d', '#ffc658', '#8dd1e1'];
 
 function DashboardPage() {
   const [userName, setUserName] = useState('');
@@ -86,6 +84,8 @@ function DashboardPage() {
     switch (currentPage) {
       case 'prospection':
         return <ProspectionPage />;
+      case 'users':
+        return <UsersPage />;
       case 'dashboard':
       default:
         if (loading) {
@@ -369,6 +369,17 @@ function DashboardPage() {
               Prospecção
             </button>
             <button
+              onClick={() => setCurrentPage('users')}
+              className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                currentPage === 'users'
+                  ? 'text-indigo-600 bg-indigo-50'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Users className="mr-3 h-5 w-5" />
+              Usuários
+            </button>
+            <button
               onClick={() => setCurrentPage('enrichment')}
               className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
                 currentPage === 'enrichment'
@@ -406,13 +417,13 @@ function DashboardPage() {
                   <span className="text-sm font-medium text-gray-700">{userName}</span>
                   <button 
                     onClick={handleLogout}
-                    className="text-sm text-red-500 hover:text-red-600"
+                    className="text-sm text-[#4b2f82] hover:text-[#4b2f82] hover:underline"
                   >
                     Sair
                   </button>
                 </div>
-                <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-600">
+                <div className="h-8 w-8 rounded-full bg-[#4b2f82] flex items-center justify-center">
+                  <span className="text-sm font-medium text-white">
                     {userName.charAt(0).toUpperCase()}
                   </span>
                 </div>

@@ -18,7 +18,9 @@ Card.displayName = "Card"
 
 const CardHeader = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  React.HTMLAttributes<HTMLDivElement> & {
+    color?: string;
+  }
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
